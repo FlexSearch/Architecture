@@ -1,0 +1,22 @@
+@startuml
+start
+:Read Consul key: 'fs/clustermaster';
+if (Check if Response has 'Session' value defined?) then (yes)
+    :Get session info details \n '/session/info/{sessionId}';
+    :Set cluster master information;
+else (no)
+    :Create a new session;
+    :Acquire the key: 'fs/clustermaster' \nto become cluster master;
+    note right
+        This can only happen when 
+        the current node is the 
+        first node in the cluster
+    end note
+endif
+:Load all map and filter lists;
+:Load all analyzers;
+:Load all index information;
+
+:Get list of all peers 'status/peers';
+stop
+@enduml

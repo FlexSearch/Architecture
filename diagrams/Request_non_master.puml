@@ -1,0 +1,15 @@
+@startuml
+title Request to non master node
+autonumber
+actor Client
+boundary LoadBalancer
+database TransactionLog
+Client -> LoadBalancer: Request
+LoadBalancer -> Alpha: indexName:id
+Alpha -> Beta: Forward request to index master
+Beta -> TransactionLog: Write ahead transaction log
+Beta --> Alpha: Response
+Alpha --> Client: Response
+Beta --> Alpha: Sync
+Beta --> Gamma: Sync
+@enduml
