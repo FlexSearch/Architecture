@@ -1,5 +1,21 @@
+'The FlexSearch-Consul.exe will run as a windows service with FlexSearch.exe as
+'its dependend service. So, ideally FlexSearch will not run unless Consul is running.
 @startuml
 start
+
+:Read Consul keys: 'fs/cluster/global?recurse=true';
+    note right
+        This will load shared location,
+        backup location etc
+    end note
+:Load all settings
+    - Map and filter lists 'fs/lists?recurse=true'
+    - Analyzers 'fs/analyzers?recurse=true'
+    - Indices Information 'fs/indices?recurse=true';
+    note right
+        This can come from either
+        Consul or shared location
+    end note
 :Read Consul key: 'fs/clustermaster';
 if (Check if Response has 'Session' value defined?) then (yes)
     :Get session info details \n '/session/info/{sessionId}';
@@ -13,10 +29,9 @@ else (no)
         first node in the cluster
     end note
 endif
-:Load all map and filter lists;
-:Load all analyzers;
-:Load all index information;
-
 :Get list of all peers 'status/peers';
+:Establish NetMq connections with all peers;
+:Check the role of the current node - client, server, data;
+:Figure out which indices should be loaded on the given node;
 stop
 @enduml
