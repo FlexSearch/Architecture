@@ -1,34 +1,39 @@
 'The FlexSearch-Consul.exe will run as a windows service with FlexSearch.exe as
 'its dependend service. So, ideally FlexSearch will not run unless Consul is running.
 @startuml
-start
+start 
 
-:Read Consul keys: 'fs/cluster/global?recurse=true';
+:Identify cluster master;
     note right
-        This will load shared location,
-        backup location etc
+        See Leader_election logic
     end note
-:Load all settings
-    - Map and filter lists 'fs/lists?recurse=true'
-    - Analyzers 'fs/analyzers?recurse=true'
-    - Indices Information 'fs/indices?recurse=true';
-    note right
-        This can come from either
-        Consul or shared location
-    end note
-:Read Consul key: 'fs/clustermaster';
-if (Check if Response has 'Session' value defined?) then (yes)
-    :Get session info details \n '/session/info/{sessionId}';
-    :Set cluster master information;
-else (no)
-    :Create a new session;
-    :Acquire the key: 'fs/clustermaster' \nto become cluster master;
-    note right
-        This can only happen when 
-        the current node is the 
-        first node in the cluster
-    end note
+if (Node is cluster master?) then (Yes)
+    :Push global settings to consul KV store
+        - 'fs/cluster/global';
+        note left
+            This will load shared location,
+            backup location etc
+        end note
+    : Push all settings to consul KV store
+        - Map and filter lists 'fs/lists'
+        - Analyzers 'fs/analyzers'
+        - Indices Information 'fs/indices';
+        note left
+            This comes from shared storage
+        end note
+    : Set Cluster Replication done
+        - 'fs/cluster/replication';
+        note left
+            This can be another key in consul
+        end note
+else (No)
+    while (Cluster Replication is done?) is (No)
+        :Retrieve global settings from consul;
+        :Retrieve all settings from consul KV store;
+    endwhile (Yes)
 endif
+
+
 :Get list of all peers 'status/peers';
 :Establish NetMq connections with all peers;
 :Check the role of the current node - client, server, data;

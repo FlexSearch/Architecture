@@ -1,0 +1,29 @@
+@startuml
+start
+
+:Read Consul key: 'fs/clustermaster';
+if (Check if Response has 'Session' value defined?) then (yes)
+    :Get session info details \n '/session/info/{sessionId}';
+    :Set cluster master information;
+else (no)
+    :Create a new session;
+    :Acquire the key: 'fs/clustermaster' \nto become cluster master;
+    note right
+        This can only happen when 
+        the current node is the 
+        first node in the cluster
+    end note
+endif
+:Watch for changes on the 'fs/clustermaster' key.
+This is to detect when the clustermaster is lost;
+note right
+    Use a blocking query to do this.
+    The cluster master should also watch because
+    a user might force close the session.
+
+    Note: in case session is lost, attempts to 
+    reacquire it should be separated by timed wait
+end note
+
+stop
+@enduml

@@ -1,0 +1,16 @@
+@startuml
+start
+
+while (Did all nodes join cluster?) is (No)
+    :Start consul server agent on remaining nodes
+        - 'consul agent -server';
+    :Join remaining nodes: 'consul join';
+endwhile (Yes)
+
+:Start FlexSearch instance on each node;
+    note right
+        See Node_start_logic
+    endnote
+
+stop
+@enduml
